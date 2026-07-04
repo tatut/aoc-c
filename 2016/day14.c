@@ -37,9 +37,32 @@ inline void inc(char *start, char **_end) {
   }
 }
 
-long part(str input, void (hash_fn(char*,uint8_t*))) {
+void rehash(uint8_t *digest, int times) {
+  MD5Context init;
+  md5Init(&init);
+
+  char as_hex[32];
+  while (times--) {
+    MD5Context ctx = init;
+    for (int n = 0; n < 32; n++) {
+      as_hex[n] = hex(NIBBLE(digest, n));
+    }
+    md5Update(&ctx, (uint8_t *)as_hex, 32);
+    md5Finalize(&ctx);
+    memcpy(digest, ctx.digest, 16);
+  }
+}
+
+long part(str salt, int stretch) {
   char hash[64] = {0};
-  size_t len = snprintf(hash, 64, "%.*s0", (int)input.len, input.data);
+  snprintf(hash, 64, "%.*s", (int)salt.len, salt.data);
+
+  MD5Context salt_ctx;
+  md5Init(&salt_ctx);
+  md5Update(&salt_ctx, (uint8_t*)hash, salt.len); // init ctx with the salt
+
+  char num[5] = {'0', 0, 0, 0, 0}; // initial number
+
   long idx = 0;
 
   // list of waiting indexes by digit 0 - 15
@@ -54,14 +77,16 @@ long part(str input, void (hash_fn(char*,uint8_t*))) {
   // we must loop until the last idx+1000 to ensure no earlier
   // idx is found
   char *start, *end;
-  start = end = &hash[len] - 1;
+  start = end = &num[0];
+
   while (num_found < 64 || idx < found[63] + 1000) {
-    // snprintf(&hash[len], 64 - len, "%ld", idx);
+    MD5Context ctx = salt_ctx;
+    md5Update(&ctx, (uint8_t*)num, (size_t)((end-start)+1));
+    md5Finalize(&ctx);
 
+    if(stretch) rehash(ctx.digest, stretch);
 
-    //printf("%s\n",hash);
-    uint8_t md5[16];
-    hash_fn(hash, md5);
+    uint8_t *md5 = ctx.digest;
     bool triple = false;
     for (int i = 0; i < 30; i++) { // iterate the hex digits
       // take high or low nibble
@@ -123,20 +148,8 @@ long part(str input, void (hash_fn(char*,uint8_t*))) {
   return found[63];
 }
 
-void extended_hash(char *input, uint8_t *md5) {
-  char as_hex[33] = {0}; // hex md5 + 0 terminator
-  md5String(input, md5);
-  for (int i = 0; i < 2016; i++) {
-    // format previous hash into output
-    for (int n = 0; n < 32; n++) {
-      as_hex[n] = hex(NIBBLE(md5, n));
-    }
-    md5String(as_hex, md5);
-  }
-}
-
 void day14(Day *day) {
   str salt = str_trim(day->input);
-  PART1(part(salt, md5String));
-  PART2(part(salt, extended_hash));
+  PART1(part(salt, 0));
+  PART2(part(salt, 2016));
 }

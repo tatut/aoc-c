@@ -18,6 +18,15 @@ typedef struct str {
   char *data;
 } str;
 
+typedef struct queue {
+  uint64_t capacity;
+  uint64_t size; // how many items
+  uint64_t take; // take pos
+  uint64_t put;  // put pos
+  size_t item_size;
+  uint8_t *items;
+} queue;
+
 typedef enum AnswerType {
   NO_ANSWER = 0,
   LONG_ANSWER = 1,
@@ -81,4 +90,13 @@ char str_char_at(str str, size_t idx);
 char *str_to_cstr(str str);
 str *str_lines(str in);
 bool str_scan(const char *fmt, str in, ...);
+
+queue initq_(size_t item_type);
+void enq_(queue *q, uint8_t *item);
+uint8_t *deq_(queue *q);
+void freeq(queue *q);
+#define initq(type) initq_(sizeof(type))
+#define enq(q, item) enq_(&(q), (uint8_t*)(&item))
+#define deq(q, type) *((type*)deq_(&(q)))
+
 #endif

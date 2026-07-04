@@ -13,13 +13,6 @@ void set_str_answer(Answer *a, str ans) {
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
-/*bool str_scan(str in, const char *fmt, ...) {
-  va_list args;
-  va_start (args, fmt);
-
-  va_end(args);
-  }*/
-
 bool str_scan(const char *fmt, str in, ...) {
   va_list args;
   va_start(args, in);
@@ -255,4 +248,61 @@ str *str_lines(str in) {
   if(rest.len > 0)
     arrput(lines, rest);
   return lines;
+}
+
+queue initq_(size_t item_size) {
+  return (queue){.item_size = item_size,
+                 .items = malloc(item_size * 512),
+                 .size = 0,
+                 .put = 0,
+                 .take = 0,
+                 .capacity = 512};
+}
+
+uint8_t *deq_(queue *q) {
+  if (!q->size) {
+    fprintf(stderr, "Tried to dequeue from an empty queue!\n");
+  }
+  uint8_t *ptr = &q->items[q->take * q->item_size];
+  q->size--;
+  q->take = (q->take + 1) % q->capacity;
+  return ptr;
+}
+
+void enq_(queue *q, uint8_t *item) {
+  if (q->size == q->capacity) {
+    size_t new_capacity = q->capacity * 2;
+    uint8_t *new = malloc(new_capacity * q->item_size);
+    if (!new) {
+      fprintf(stderr, "Out of memory, tried to realloc queue to %lld bytes\n",
+              q->capacity * q->item_size);
+      exit(1);
+    }
+    uint8_t *old = q->items;
+    size_t old_size = q->size;
+    size_t old_take = q->take;
+    q->size = 0;
+    q->take = 0;
+    q->put = 0;
+    q->items = new;
+    q->capacity = new_capacity;
+    for (size_t i = 0; i < old_size; i++) {
+      enq_(q, &old[((old_take + i) % old_size) * q->item_size]);
+    }
+    q->take = 0;
+    q->put = q->size;
+    free(old);
+    //printf("new capacity %llu\n", q->capacity);
+  }
+  memcpy(&q->items[q->put * q->item_size], item, q->item_size);
+  q->put = (q->put + 1) % q->capacity;
+  q->size++;
+}
+
+void freeq(queue *q) {
+  q->capacity = 0;
+  q->size = 0;
+  q->take = 0;
+  q->put = 0;
+  free(q->items);
 }
