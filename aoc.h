@@ -11,6 +11,7 @@
 
 typedef uint8_t u8;
 typedef uint16_t u16;
+typedef uint32_t u32;
 typedef uint64_t u64;
 
 typedef struct str {
@@ -90,6 +91,7 @@ char str_char_at(str str, size_t idx);
 char *str_to_cstr(str str);
 str *str_lines(str in);
 bool str_scan(const char *fmt, str in, ...);
+int str_scan_any(str in, int num_fmt, ...);
 
 queue initq_(size_t item_type);
 void enq_(queue *q, uint8_t *item);
@@ -99,4 +101,65 @@ void freeq(queue *q);
 #define enq(q, item) enq_(&(q), (uint8_t*)(&item))
 #define deq(q, type) *((type*)deq_(&(q)))
 
+#define CMP_FN(name, type, field)                                              \
+  int name(const void *aptr, const void *bptr) {                               \
+    type *a = (type *)aptr;                                                    \
+    type *b = (type *)bptr;                                                    \
+    if (a->field < b->field)                                                   \
+      return -1;                                                               \
+    if (a->field > b->field)                                                   \
+      return 1;                                                                \
+    return 0;                                                                  \
+  }
+
+#define CMP_FN_REV(name, type, field) int name(const void *aptr, const void *bptr) { \
+    type *a = (type*)aptr; \
+    type *b = (type*)bptr; \
+    if(b->field < a->field) return -1; \
+    if(b->field > a->field) return 1; \
+    return 0; \
+    }
+
+#define EQ_FN(name, type, expr)                                                \
+  bool name(const void *aptr, const void *bptr) {                              \
+    type *a = (type *)aptr;                                                    \
+    type *b = (type *)bptr;                                                    \
+    if (expr)                                                                  \
+      return true;                                                             \
+    return false;                                                              \
+  }
+
+typedef struct pqueue {
+  int (*compare)(const void *, const void *);
+  bool (*equals)(const void*, const void*);
+  size_t capacity;
+  size_t size;
+  size_t item_size; // size of a single item
+  void *items;
+  char *scratch; // scratch data to use for temp swaps
+} pqueue;
+
+#define PQ_PTR(pq, n)                                                          \
+  ((void *)((char *)(pq)->items + ((n) * (pq)->item_size)))
+
+#define pq_enq(pq, item) pq_enq_(&(pq), (void *)(&item))
+#define pq_deq(pq, to) pq_deq_(&(pq), (void*)&(to))
+#define pq_init(type, cmp_fn, eql_fn)                                          \
+  (pqueue) { .item_size = sizeof(type), .compare = cmp_fn, .equals = eql_fn }
+#define pq_contains(pq, item) pq_contains_(&(pq), (void *)&(item))
+
+void pq_enq_(pqueue *pq, void *item);
+void pq_deq_(pqueue *pq, void *item);
+void pq_free(pqueue *pq);
+bool pq_contains_(pqueue *pq, void *item);
+
+/**
+ * Calculate BFS shortest distance on a (not huge) UP,DOWN,LEFT,RIGHT grid.
+ * Allocates a bitset to hold visited.
+ *
+ * The grid is any user defined pointer, that is passed to callbacks.
+ */
+long grid4_shortest_distance(void *grid,
+                int width, int height, int from_x, int from_y, int to_x,
+                             int to_y, bool (can_move(void*,int,int,int,int)));
 #endif

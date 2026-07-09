@@ -1,6 +1,7 @@
 #include "aoc.h"
 
 #include <curl/curl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -103,6 +104,27 @@ bool run_day(Day *day, bool example) {
 
   char module_file[16];
   snprintf(module_file, 16, "%d/day%d.o", day->year, day->day);
+
+  char source_file[16];
+  snprintf(source_file, 16, "%d/day%d.c", day->year, day->day);
+
+  FILE *module = fopen(module_file, "r");
+  FILE *source = fopen(source_file, "r");
+  if (module == NULL) {
+    try_compile(day->year, day->day);
+  } else if(source != NULL) {
+    // check if source is newer
+    struct stat mfs, sfs;
+    fstat(fileno(module), &mfs);
+    fstat(fileno(source), &sfs);
+    if (sfs.st_mtimespec.tv_sec > mfs.st_mtimespec.tv_sec ||
+        (sfs.st_mtimespec.tv_sec == mfs.st_mtimespec.tv_sec &&
+         sfs.st_mtimespec.tv_nsec > mfs.st_mtimespec.tv_nsec)) {
+      printf("Source changed, recompiling.\n");
+      try_compile(day->year, day->day);
+    }
+  }
+
 
   char function_name[16];
   snprintf(function_name, 16, "day%d", day->day);

@@ -1,4 +1,4 @@
-main: main.c aoc.c
+main: main.c aoc.c aoc.h
 	cc -O3 -o main main.c aoc.c $$(curl-config --libs)
 
 day10.o: day10.c aoc.h
