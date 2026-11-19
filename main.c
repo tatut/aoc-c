@@ -56,7 +56,12 @@ bool download_input(Day *day, const char *to_file) {
 
 char *input(Day *day, const char *file, size_t *len) {
   FILE *f = fopen(file, "r");
-  if(!f) {
+  if (!f) {
+    if (strstr(file, "_ex")) {
+      fprintf(stderr, "Example does not exist and can't be downloaded: %s\n",
+              file);
+      return NULL;
+    }
     if(!download_input(day, file)) {
       fprintf(stderr, "Input does not exist and couldn't be downloaded: %s\nCheck .session file.", file);
       return NULL;
@@ -99,8 +104,8 @@ void try_compile(int year, int day) {
 bool run_day(Day *day, bool example) {
   // load input and solution module
 
-  char input_file[16];
-  snprintf(input_file, 16, "%d/day%d%s.txt", day->year, day->day, example ? "_ex" : "");
+  char input_file[32];
+  snprintf(input_file, 32, "%d/day%d%s.txt", day->year, day->day, example ? "_ex" : "");
 
   char module_file[16];
   snprintf(module_file, 16, "%d/day%d.o", day->year, day->day);
@@ -197,7 +202,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  bool example = argc > 3 && strcmp(argv[3],"ex")==0;
+  bool example = argc > 3 && strcmp(argv[3], "ex") == 0;
   int year = atoi(argv[1]);
 
   if (strcmp(argv[2], "all") == 0) {

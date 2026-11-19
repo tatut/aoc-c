@@ -513,3 +513,13 @@ long grid4_shortest_distance(void *grid, int width, int height, int from_x,
   freeq(&q);
   return shortest;
 }
+
+
+u8 popcount(u64 n) {
+  u8 count = 0;
+  while (n) {
+    n &= (n - 1);
+    count++;
+  }
+  return count;
+}

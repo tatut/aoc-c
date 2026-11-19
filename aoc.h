@@ -162,4 +162,7 @@ bool pq_contains_(pqueue *pq, void *item);
 long grid4_shortest_distance(void *grid,
                 int width, int height, int from_x, int from_y, int to_x,
                              int to_y, bool (can_move(void*,int,int,int,int)));
+
+u8 popcount(u64 n);
+
 #endif
