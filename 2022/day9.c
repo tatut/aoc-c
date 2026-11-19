@@ -42,10 +42,15 @@ void follow(int hx, int hy, int *tx, int *ty) {
 }
 
 
-void day9(Day *day) {
-  str lines = day->input, line;
-  int hx = START, hy = START, tx = START, ty = START;
-  VISIT(tx,ty); // visit start position
+long solve(str lines, int num_tails) {
+  str line;
+  CLEAR();
+  int x[1 + num_tails], y[1 + num_tails];
+  for (int t = 0; t <= num_tails; t++) {
+    x[t] = START;
+    y[t] = START;
+  }
+  VISIT(x[0],y[0]); // visit start position
   while (str_each_line(&lines, &line)) {
     char dir;
     long count;
@@ -59,23 +64,27 @@ void day9(Day *day) {
     case 'R': dx = 1; break;
     }
     for (int i = 0; i < count; i++) {
-      hx += dx;
-      hy += dy;
-      follow(hx, hy, &tx, &ty);
-      VISIT(tx,ty);
+      x[0] += dx;
+      y[0] += dy;
+      for (int t = 0; t < num_tails; t++) {
+        follow(x[t], y[t], &x[t+1], &y[t+1]);
+      }
+      VISIT(x[num_tails],y[num_tails]);
     }
   }
 
   long visited = 0;
   for (int i = 0; i < BS_SIZE; i++)
     visited += popcount(data[i]);
-  PART1(visited);
+  return visited;
 
-
-
-
-
-  return;
 fail:
   fprintf(stderr, "Bad line: %.*s\n", (int)line.len, line.data);
+  return -1;
+}
+
+
+void day9(Day *day) {
+  PART1(solve(day->input, 1));
+  PART2(solve(day->input, 9));
 }
