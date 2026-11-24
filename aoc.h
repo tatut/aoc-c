@@ -69,6 +69,7 @@ void set_str_answer(Answer *a, str ans);
 #define str_constant(X) ((str){.len=sizeof(X)-1, .data=X})
 
 bool str_splitat(str in, const char *chars, str *split, str *rest);
+bool str_splitat_all(str in, const char *chars, str *split, str *rest);
 int str_indexof(str in, char ch);
 bool str_each_line(str *lines, str *line);
 bool is_space(char ch);
@@ -164,5 +165,8 @@ long grid4_shortest_distance(void *grid,
                              int to_y, bool (can_move(void*,int,int,int,int)));
 
 u8 popcount(u64 n);
+
+#define NEW(t) (t*)malloc(sizeof(t))
+#define NEW0(t) (t*)calloc(1,sizeof(t))
 
 #endif

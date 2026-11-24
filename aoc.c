@@ -40,7 +40,7 @@ bool str_scan(const char *fmt, str in, ...) {
       // a format specifier like %s
       at++;
       if(*at == 's') {
-        str *to = va_arg(args, str*);
+        str *to = ARG(str*);
         // read input until the next char (or end of string)
         char delim[2] = {0,0};
         if (*(at + 1) == 0) {
@@ -82,6 +82,11 @@ bool str_scan(const char *fmt, str in, ...) {
         }
       } else if (*at == '&') {
         // skip any remaining input
+        goto done;
+      } else if(*at == '*') {
+        // rest of the input string
+        str *to = ARG(str*);
+        *to = in;
         goto done;
       }
 
@@ -144,6 +149,16 @@ bool str_splitat(str in, const char *chars, str *split, str *rest) {
   return false;
 }
 
+bool str_splitat_all(str in, const char *chars, str *split, str *rest) {
+  if(in.len == 0) return false;
+  if(str_splitat(in, chars, split, rest)) return true;
+  if(in.len) {
+    *split = in;
+    *rest = (str){0};
+    return true;
+  }
+  return false;
+}
 
 int str_indexof(str in, char ch) {
   for(int i=0;i<in.len;i++) {
@@ -160,6 +175,7 @@ bool str_each_line(str *lines, str *line) {
     // last line
     line->len = lines->len;
     line->data = lines->data;
+    lines->len = 0;
     return true;
   }
   return false;
